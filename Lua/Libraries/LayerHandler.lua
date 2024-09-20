@@ -7,7 +7,6 @@ return (function()
     -- type should be "tiles" or "image"
     -- cyf_layer should be a cyf layer (wow)
     function self.CreateLayer(_type,cyf_layer)
-    
         if _type ~= "tiles" and _type ~= "image" then
             error("ally what",2)
         end
@@ -25,5 +24,5 @@ return (function()
         return layer
     end
 
-    return self 
+    return self
 end)()

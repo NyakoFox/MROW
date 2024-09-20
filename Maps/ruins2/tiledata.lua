@@ -1,7 +1,8 @@
 return {
-  version = "1.4",
+  version = "1.10",
   luaversion = "5.1",
-  tiledversion = "1.4.3",
+  tiledversion = "1.11.0",
+  class = "",
   orientation = "orthogonal",
   renderorder = "right-down",
   width = 16,
@@ -15,7 +16,7 @@ return {
     {
       name = "ruins1",
       firstgid = 1,
-      filename = "../../Tilesets/ruins1.tsx",
+      class = "",
       tilewidth = 20,
       tileheight = 20,
       spacing = 0,
@@ -26,6 +27,8 @@ return {
       imageheight = 380,
       transparentcolor = "#c386ff",
       objectalignment = "unspecified",
+      tilerendersize = "tile",
+      fillmode = "stretch",
       tileoffset = {
         x = 0,
         y = 0
@@ -36,14 +39,14 @@ return {
         height = 20
       },
       properties = {},
-      terrains = {},
+      wangsets = {},
       tilecount = 152,
       tiles = {}
     },
     {
       name = "ruins2",
       firstgid = 153,
-      filename = "../../Tilesets/ruins2.tsx",
+      class = "",
       tilewidth = 20,
       tileheight = 20,
       spacing = 0,
@@ -54,6 +57,8 @@ return {
       imageheight = 260,
       transparentcolor = "#c386ff",
       objectalignment = "unspecified",
+      tilerendersize = "tile",
+      fillmode = "stretch",
       tileoffset = {
         x = 0,
         y = 0
@@ -64,14 +69,14 @@ return {
         height = 20
       },
       properties = {},
-      terrains = {},
+      wangsets = {},
       tilecount = 104,
       tiles = {}
     },
     {
       name = "ruins3",
       firstgid = 257,
-      filename = "../../Tilesets/ruins3.tsx",
+      class = "",
       tilewidth = 20,
       tileheight = 20,
       spacing = 0,
@@ -82,6 +87,8 @@ return {
       imageheight = 180,
       transparentcolor = "#c386ff",
       objectalignment = "unspecified",
+      tilerendersize = "tile",
+      fillmode = "stretch",
       tileoffset = {
         x = 0,
         y = 0
@@ -92,7 +99,7 @@ return {
         height = 20
       },
       properties = {},
-      terrains = {},
+      wangsets = {},
       tilecount = 72,
       tiles = {}
     }
@@ -106,10 +113,13 @@ return {
       height = 12,
       id = 1,
       name = "Tile Layer 1",
+      class = "",
       visible = true,
       opacity = 1,
       offsetx = 0,
       offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
       properties = {},
       encoding = "lua",
       data = {
@@ -135,10 +145,13 @@ return {
       height = 12,
       id = 2,
       name = "Tile Layer 2",
+      class = "",
       visible = true,
       opacity = 1,
       offsetx = 0,
       offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
       properties = {},
       encoding = "lua",
       data = {
@@ -161,10 +174,13 @@ return {
       draworder = "topdown",
       id = 4,
       name = "collision",
+      class = "",
       visible = false,
       opacity = 1,
       offsetx = 0,
       offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
       properties = {},
       objects = {
         {
@@ -358,10 +374,13 @@ return {
       draworder = "topdown",
       id = 5,
       name = "events",
+      class = "",
       visible = true,
       opacity = 1,
       offsetx = 0,
       offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
       properties = {},
       objects = {
         {

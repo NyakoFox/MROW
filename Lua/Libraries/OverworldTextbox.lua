@@ -15,7 +15,6 @@ self.text_x_offset = 0
 self.max_character_width = 500
 self.top = false
 
-
 -- create sprites
 self.menutextbox1 = CreateSprite("px", "Textbox")
 self.menutextbox1.SetPivot(0, 0)
@@ -158,7 +157,7 @@ function self.SetText(str,top,portrait,options)
         self.text_x_offset = 0
         self.max_character_width = 500
     end
-    
+
     self.textStars.MoveTo(self.text_x_offset + 16, 0)
     self.text.MoveTo(self.text_x_offset + 40 + 16 - 9, 0)
     self.textStars.textMaxWidth = self.max_character_width + asteriskAndSpaceWidth
@@ -333,7 +332,5 @@ function self.FormatText(tab)
 
     return textStarsTable, textTable
 end
-
-
 
 return self

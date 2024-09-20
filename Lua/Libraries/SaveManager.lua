@@ -13,10 +13,10 @@ return (function()
         end
 
         local file = Misc.OpenFile("Saves/" .. save_name, "r")
-        
-        all_lines = ""
 
-        lines_table = file.ReadLines() 
+        local all_lines = ""
+
+        local lines_table = file.ReadLines()
         for line_index = 1, #lines_table do
             all_lines = all_lines .. lines_table[line_index]
             if line_index ~= #lines_table then
@@ -35,5 +35,5 @@ return (function()
 
 
 
-    return self 
+    return self
 end)()

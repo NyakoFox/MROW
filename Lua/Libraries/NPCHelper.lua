@@ -1,10 +1,10 @@
 return (function()
     local self
     self = { }
-    
+
     self.currently_talking = nil
     self.animation_after = nil
-    
+
     self.walking_events = {}
 
     function self.Animate(event)
@@ -22,7 +22,6 @@ return (function()
             event.animationindex = 1
             event.animationtimer = 0
         end
-        
 
         event.sprite.Set(event.sprites_folder .. event.animations[event.animation][4] .. "/" .. event.animations[event.animation][1][event.animationindex])
         event.animationtimer = event.animationtimer + 1
@@ -50,7 +49,7 @@ return (function()
             event.animation = "IdleLeft"
         end
     end
-    
+
     function self.WalkTo(event,x,y,speed,animation)
         if not speed then
             speed = 3
@@ -66,7 +65,7 @@ return (function()
         table.insert(self.walking_events,event)
         SceneManager.Lock() -- Lock the scene if there's a cutscene active
     end
-    
+
     function self.WalkToX(event,x,speed)
         if not speed then
             speed = 3
@@ -102,7 +101,7 @@ return (function()
         table.insert(self.walking_events,event)
         SceneManager.Lock()
     end
-    
+
     function self.Update()
         for event_id = #self.walking_events, 1, -1 do
             event = self.walking_events[event_id]
@@ -191,12 +190,12 @@ return (function()
             end
         end
     end
-    
+
     function self.AreEventsColliding(event1,event2)
         local event_rect1 = Overworld.GetEventRect(event1)
         local event_rect2 = Overworld.GetEventRect(event2)
         return Overworld.isColliding(event_rect1,event_rect2)
     end
 
-    return self 
+    return self
 end)()

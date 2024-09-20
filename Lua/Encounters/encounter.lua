@@ -9,7 +9,7 @@ function OverworldStarting()
     Audio.Stop()
 end
 
-function BeforeSaveCreation() -- Before the save file is created, let's add a default plot value
+function PreNewSave() -- Before the save file is created, let's add a default plot value
     Overworld.save_data["plot"] = 0
 end
 

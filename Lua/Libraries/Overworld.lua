@@ -4,7 +4,7 @@ return (function()
 
     enemies = {}
 
-    self.debug_mode = true
+    self.debug_mode = false
     self.debug_ignore_collision = false
 
     -- Initializes the library
@@ -16,8 +16,8 @@ return (function()
         CreateLayer("OWBackground", "Top")
         CreateLayer("Tiles", "OWBackground")
         CreateLayer("Objects", "Tiles")
-        CreateLayer("Player", "Objects")
-        CreateLayer("ObjectsAbove", "Player")
+        CreateLayer("Events", "Objects")
+        CreateLayer("ObjectsAbove", "Events")
         CreateLayer("Textbox","ObjectsAbove")
         CreateLayer("Fader","Textbox")
         CreateLayer("SuperTop","Fader")
@@ -49,8 +49,6 @@ return (function()
 
         self.collision_rectangles = {}
         self.collision_triangles = {}
-
-        self.cutscene_active = false
 
         -- Room transitioning
         self.transitioning_to_room = false
@@ -96,6 +94,11 @@ return (function()
             OverworldStarting()
         end
 
+        if music then
+            Audio.LoadFile(music)
+            Audio.playtime = 0
+        end
+
         self.playtime = 0
 
         self.LoadAndProcess()
@@ -109,17 +112,29 @@ return (function()
 
         self.save_data = {}
 
-        self.menu_open = false
+        -- STATES: MOVEMENT, CUTSCENE, ROOM_TRANSITION, MENU, BATTLE_TRANSITION
+        self.state = "MOVEMENT"
+        self.state_data = nil
+        self.old_state = nil
 
-        self.lock_player_input = false
-        self.can_open_menu = true
-        
         self.current_menu_option = 0
+    end
+
+    function self.OnStateChange(old, new, state_data)
+
+    end
+
+    function self.SetState(state, state_data)
+        self.old_state = self.state
+        self.state = state
+        self.state_data = state_data
+
+        self.OnStateChange(self.old_state, state, state_data)
     end
 
     function self.DEBUG(text)
         if self.debug_mode then
-            --DEBUG(text)
+            DEBUG(text)
         end
     end
 
@@ -146,7 +161,6 @@ return (function()
     end
 
     function self.SaveGame()
-        if BeforeSave then BeforeSave() end
         self.last_save = {
             playtime   = self.playtime,
             player     = self.player.internalname,
@@ -159,14 +173,14 @@ return (function()
             roomname   = self.mapdata.name and self.mapdata.name or "",
             save_data  = self.save_data
         }
-        if BeforeSaveWritten then BeforeSaveWritten() end
+        if PreSave then PreSave() end
         SaveManager.WriteSave("file0", self.last_save)
-        if AfterSave then AfterSave() end
+        if PostSave then PostSave() end
     end
 
     function self.CreateNewSave()
         self.save_data = {}
-        if BeforeSaveCreation then BeforeSaveCreation() end
+        if PreNewSave then PreNewSave() end
         self.last_save = {
             playername = "EMPTY",
             playtime   = 0,
@@ -176,7 +190,7 @@ return (function()
             roomname   = "--",
             save_data = self.save_data
         }
-        if AfterSaveCreation then AfterSaveCreation() end
+        if PostNewSave then PostNewSave() end
     end
 
     function self.LoadGame()
@@ -199,8 +213,7 @@ return (function()
         if not self.inbattle then
             if self.debug_mode then
                 if Input.GetKey("F10") == 1 then
-                    self.lock_player_input = false
-                    self.can_open_menu = true
+                    self.SetState("MOVEMENT")
                     self.debug_ignore_collision = not self.debug_ignore_collision
                 end
                 if Input.GetKey("F9") == 1 then
@@ -251,24 +264,25 @@ return (function()
 
     function self.ReturnFromBattle()
         State("NONE")
+
+        self.SetState(self.old_state)
+
         self.transitioning_from_battle = true
         self.transition_timer = 0
         self.transition_fader.alpha = 0
-        self.lock_player_input = false
-        self.can_open_menu = true
-        self.player.sprite.layer = "Player"
+        self.player.sprite.layer = "Events"
         if self.pre_battle_audio ~= "empty" then
             Audio.LoadFile(self.pre_battle_audio)
             Audio.playtime = self.pre_battle_time
         end
-        if self.mapdata.AfterBattle then self.mapdata.AfterBattle() end
+        if self.mapdata.PostBattle then self.mapdata.PostBattle() end
     end
 
     function self.EnterBattle(battle)
         self.transitioning_to_battle = true
-        self.lock_player_input = true
-        self.can_open_menu = false
         self.transition_timer = 0
+
+        self.SetState("BATTLE_TRANSITION")
 
         self.transition_fader.alpha = 1
 
@@ -533,10 +547,9 @@ return (function()
             if self.transition_fader.alpha >= 1 then
                 self.transitioning_to_room = false
                 self.transitioning_from_room = true
-                self.lock_player_input = false
-                self.can_open_menu = true
+                self.SetState("MOVEMENT")
 
-                if self.mapdata.BeforeUnload then self.mapdata.BeforeUnload() end
+                if self.mapdata.PreMapTransition then self.mapdata.PreMapTransition() end
                 self.UnloadMap()
                 self.LoadMap(self.map_to_load)
                 self.player.x = self.new_map_x * self.mapdata.scale.x
@@ -547,7 +560,7 @@ return (function()
         elseif self.transitioning_from_room then
             if self.transition_fader.alpha <= 0 then
                 self.transitioning_from_room = false
-                if self.mapdata.AfterEnter then self.mapdata.AfterEnter() end
+                if self.mapdata.PostMapTransition then self.mapdata.PostMapTransition() end
             else
                 self.transition_fader.alpha = self.transition_fader.alpha - 0.06
             end
@@ -558,8 +571,9 @@ return (function()
         if self.transitioning_to_room then return end
         if self.mapdata.OnLeave then self.mapdata.OnLeave() end
         self.transitioning_to_room = true
-        self.lock_player_input = true
-        self.can_open_menu = false
+
+        self.SetState("ROOM_TRANSITION")
+
         self.transitioning_from_room = false
         self.map_to_load = map
         self.new_map_x = x
@@ -622,10 +636,10 @@ return (function()
         event.data = object
         event.properties = object.properties
 
-        if event.sprite_path then 
+        if event.sprite_path then
             event.sprites_folder = ".." .. folder .. "/Sprites/"
             --error(event.sprites_folder .. event.sprite_path)
-            event.sprite = CreateSprite(event.sprites_folder .. event.sprite_path, "Objects")
+            event.sprite = CreateSprite(event.sprites_folder .. event.sprite_path, "Events")
             event.sprite.xscale = self.mapdata.scale.x
             event.sprite.yscale = self.mapdata.scale.y
 
@@ -682,7 +696,7 @@ return (function()
                 end
             end
 
-            if event.OnInteract and not event.removed and not self.cutscene_active and not self.menu_open then
+            if event.OnInteract and not event.removed and self.state == "MOVEMENT" then
                 if Input.Confirm == 1 then
 
                     local x_inc_1 = (self.player.dir == 0) and self.player.interaction_distance or 0
@@ -711,14 +725,26 @@ return (function()
             if not event.removed then
                 event.sprite.x = event.x + (event.sprite_offset.x * self.mapdata.scale.x ) + ((event.data.width * self.mapdata.scale.x) / 2) + 0.01
                 event.sprite.y = event.y + (event.sprite_offset.y * self.mapdata.scale.y ) + 0.01
-                if event.uses_depth then
-                    if self.player.y < event.sprite.y + (event.depth_offset * self.mapdata.scale.y) then
-                        event.sprite.layer = "Objects"
-                    else
-                        event.sprite.layer = "ObjectsAbove"
-                    end
-                end
             end
+        end
+
+        local events = {}
+        local first_index = 0
+        for i, event in ipairs(self.mapdata.events) do
+            if event.uses_depth then
+                table.insert(events, event)
+            else
+                event.sprite.childIndex = first_index
+                first_index = first_index + 1
+            end
+        end
+
+        table.insert(events, self.player)
+
+        table.sort(events, function(a, b) return a.y > b.y end)
+
+        for i, event in ipairs(events) do
+            event.sprite.childIndex = first_index + i
         end
     end
 
@@ -967,7 +993,7 @@ return (function()
         -- Misc.MoveCameraTo(self.player.x,self.player.y)
 
         local spritepath = self.player.animations.IdleDown[4] .. "/" .. self.player.animations.IdleDown[1][1]
-        self.player.sprite = CreateSprite("../Players/" .. playername .. "/Sprites/" .. spritepath, "Player")
+        self.player.sprite = CreateSprite("../Players/" .. playername .. "/Sprites/" .. spritepath, "Events")
         self.player.sprite.SetPivot(0,0)
         self.player.animation = "IdleDown"
         self.player.dir = 2
@@ -1003,9 +1029,8 @@ return (function()
     end
 
     function self.OpenMenu()
-        self.menu_open = true
-        self.lock_player_input = true
-        self.can_open_menu = true
+        self.SetState("MENU")
+
         Audio.PlaySound("menumove")
 
         self.menu_top_rect_border = CreateSprite("px", "Textbox")
@@ -1074,7 +1099,7 @@ return (function()
         self.menu_bottom_cell        .HideBubble()
         self.menu_bottom_cell        .SetParent(self.menu_bottom_rect)
         self.menu_bottom_cell        .MoveTo(47, 96 - 36 - 36)
-        
+
         self.menu_bottom_soul        = CreateSprite("spr_heartsmall", "Textbox")
         self.menu_bottom_soul        .Scale(2,2)
         self.menu_bottom_soul        .SetParent(self.menu_bottom_rect)
@@ -1094,23 +1119,19 @@ return (function()
     end
 
     function self.CloseMenu()
-        self.menu_open = false
-        self.lock_player_input = false
+        self.SetState("MOVEMENT")
 
         self.menu_top_rect_border.Remove() -- Everything else is parented!
         self.menu_bottom_rect_border.Remove()
     end
 
     function self.TakeMenuInput()
-        if self.can_open_menu then
+        if self.state == "MOVEMENT" then
             if Input.Menu == 1 then
                 self.OpenMenu()
-                self.can_open_menu = false
                 return
             end
-        end
-
-        if self.menu_open then
+        elseif self.state == "MENU" then
             if Input.Down == 1 then
                 if self.current_menu_option < 2 then
                     Audio.PlaySound("menumove")
@@ -1129,7 +1150,6 @@ return (function()
 
             if Input.Menu == 1 or Input.Cancel == 1 then
                 self.CloseMenu()
-                self.can_open_menu = true
             end
         end
     end
@@ -1138,8 +1158,8 @@ return (function()
         -- Let's try and recreate Undertale's controls faithfully. Oh no.
 
         self.TakeMenuInput()
-        
-        if self.lock_player_input then
+
+        if self.state ~= "MOVEMENT" then
             return
         end
 
@@ -1388,13 +1408,13 @@ return (function()
         self.player.sprite.y = self.player.y
 
 
-        if self.lock_player_input then
+        if self.state ~= "MOVEMENT" then
             moving = false
         end
 
         -- Animation code... this is very ugly, but it's accurate.
 
-        if not self.lock_player_input then
+        if self.state == "MOVEMENT" then
 
             if Input.Left > 0 then
                 self.turned = true
@@ -1477,7 +1497,7 @@ return (function()
 
     function self.GetModName()
         local _self = {}
-        output = Misc.OpenFile("","w").filePath
+        local output = Misc.OpenFile("","w").filePath
         output = output:gsub("/", "\\")
         _self.modPath = output
         _self.modName = output:sub(0, output:find("\\[^\\]*$") - 1):sub(output:sub(0, output:find("\\[^\\]*$") - 1):find("\\[^\\]*$") + 1, output:len())

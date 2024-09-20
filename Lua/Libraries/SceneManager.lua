@@ -3,22 +3,20 @@ return (function()
     self = { }
 
     self.current_coroutine = nil
-    
+
     self.delay_timer = 0
-    
+
     self.delay_from_textbox = false
 
     -- Main update function of the module
     function self.Update()
         if self.current_coroutine then
             if coroutine.status(self.current_coroutine) == "dead" then
-                Overworld.cutscene_active = false
-                Overworld.lock_player_input = false
-                Overworld.can_open_menu = true
+                Overworld.SetState("MOVEMENT")
                 self.current_coroutine = nil
                 return
             end
-            
+
             if coroutine.status(self.current_coroutine) == "suspended" then
                 if self.delay_timer > 0 then
                     self.delay_timer = self.delay_timer - 1
@@ -33,16 +31,6 @@ return (function()
                 end
             end
         end
-    end
-    
-    function self.UnlockPlayerMovement()
-        Overworld.lock_player_input = false
-    end
-
-    function self.LockPlayerMovement()
-        Overworld.cutscene_active = true
-        Overworld.lock_player_input = true
-        Overworld.can_open_menu = false
     end
 
     function self.Delay(frames)
@@ -93,9 +81,7 @@ return (function()
             func = cutscene
         end
 
-        Overworld.cutscene_active = true
-        Overworld.lock_player_input = true
-        Overworld.can_open_menu = false
+        Overworld.SetState("CUTSCENE")
         self.current_coroutine = coroutine.create(func)
         coroutine.resume(self.current_coroutine)
     end

@@ -12,11 +12,11 @@ return (function()
 
     function self.BeforeLoad()   end -- Called right before the map is loaded
     function self.OnLoad()       end -- Called right after the map is loaded
-    function self.AfterEnter()   end -- Called after the fade-in transition is finished
+    function self.PostMapTransition()   end -- Called after the fade-in transition is finished
     function self.Update()       end -- Called every frame
     function self.OnLeave()      end -- Called the moment the fade-out transition starts
-    function self.BeforeUnload() end -- Called right before the map gets unloaded
-    function self.AfterBattle()  end -- Called right after you return from a battle
+    function self.PreMapTransition() end -- Called right before the map gets unloaded
+    function self.PostBattle()  end -- Called right after you return from a battle
 
     -- Don't touch anything after these lines
     return self
