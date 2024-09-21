@@ -183,6 +183,15 @@ function self.CheckLevel()
     return false
 end
 
+function self.GetNextLevel()
+    for i = 1, #self.level_up_table do
+        if (Overworld.player.xp < self.level_up_table[i]) then
+            return self.level_up_table[i]
+        end
+    end
+    return self.level_up_table[#self.level_up_table]
+end
+
 local _State = State
 function State(state)
     self.custom_state = nil
@@ -223,7 +232,7 @@ function self.Update()
                 self.TrySpare()
             else
                 Audio.PlaySound("menuconfirm")
-                
+
                 if fleesuccess then
                     self.StartFlee()
                 elseif fleesuccess == false then -- gross, however i don't want nil to be caught

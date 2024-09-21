@@ -15,10 +15,8 @@ return (function()
         -- Create the layers used in this module
         CreateLayer("OWBackground", "Top")
         CreateLayer("Tiles", "OWBackground")
-        CreateLayer("Objects", "Tiles")
-        CreateLayer("Events", "Objects")
-        CreateLayer("ObjectsAbove", "Events")
-        CreateLayer("Textbox","ObjectsAbove")
+        CreateLayer("Events", "Tiles")
+        CreateLayer("Textbox","Events")
         CreateLayer("Fader","Textbox")
         CreateLayer("SuperTop","Fader")
 
@@ -118,6 +116,7 @@ return (function()
         self.old_state = nil
 
         self.current_menu_option = 0
+        self.menu_state = "MAIN"
     end
 
     function self.OnStateChange(old, new, state_data)
@@ -157,6 +156,28 @@ return (function()
             self.player.hp    = self.last_save.maxhp
             Player.lv         = self.last_save.lv
             Player.hp         = self.last_save.maxhp
+
+            -- We have to set the weapon and the armor,
+            -- which means some fun hacks must be made.
+
+            -- FIRST: Remove all inventory entries
+            for i = 1, Inventory.ItemCount do
+                Inventory.RemoveItem(i)
+            end
+
+            -- SECOND: Add the weapon and armor!
+            if (self.last_save.weapon and self.last_save.weapon ~= "Stick"  ) then Inventory.AddItem(self.last_save.weapon) end
+            if (self.last_save.armor  and self.last_save.armor  ~= "Bandage") then Inventory.AddItem(self.last_save.armor ) end
+
+            -- THIRD: Equip them
+
+            local _BattleDialog = BattleDialog
+            function BattleDialog(...) end
+
+            if (self.last_save.weapon and self.last_save.weapon ~= "Stick"  ) then Inventory.UseItem(1, true) end
+            if (self.last_save.armor  and self.last_save.armor  ~= "Bandage") then Inventory.UseItem(2, true) end
+
+            BattleDialog = _BattleDialog
         end
     end
 
@@ -171,7 +192,9 @@ return (function()
             gold       = self.player.gold,
             playername = self.player.name,
             roomname   = self.mapdata.name and self.mapdata.name or "",
-            save_data  = self.save_data
+            save_data  = self.save_data,
+            weapon     = Player.weapon,
+            armor      = Player.armor
         }
         if PreSave then PreSave() end
         SaveManager.WriteSave("file0", self.last_save)
@@ -1006,11 +1029,10 @@ return (function()
         self.player.sprite.Scale(self.player.size[1],self.player.size[2])
 
 
-        self.player.debugpoint = CreateSprite("px","Objects")
+        self.player.debugpoint = CreateSprite("px","SuperTop")
         self.player.debugpoint.Scale(4, 4)
 
         self.player.debugpoint.alpha = 0
-
     end
 
     function self.UnloadPlayer()
@@ -1045,29 +1067,29 @@ return (function()
         self.menu_top_rect.SetAnchor(0, 0)
         self.menu_top_rect.MoveTo(6, 6)
 
-        self.menu_top_name        = CreateText("[instant][font:uidialogmedspacesave]" .. self.player.name, {0,0}, 640, "Textbox")
-        self.menu_top_name        .progressmode = "none"
-        self.menu_top_name        .HideBubble()
-        self.menu_top_name        .SetParent(self.menu_top_rect)
-        self.menu_top_name        .MoveTo(9,70)
+        self.menu_top_name = CreateText("[instant][font:uidialogmedspacesave]" .. self.player.name, {0,0}, 640, "Textbox")
+        self.menu_top_name.progressmode = "none"
+        self.menu_top_name.HideBubble()
+        self.menu_top_name.SetParent(self.menu_top_rect)
+        self.menu_top_name.MoveTo(8,70)
 
-        self.menu_top_lv          = CreateText("[instant][font:menu][charspacing:2]LV[charspacing:0]  [charspacing:2]" .. self.player.lv, {0,0}, 999, "Textbox")
-        self.menu_top_lv          .progressmode = "none"
-        self.menu_top_lv          .HideBubble()
-        self.menu_top_lv          .SetParent(self.menu_top_rect)
-        self.menu_top_lv          .MoveTo(9,46)
+        self.menu_top_lv = CreateText("[instant][font:menu][charspacing:2]LV[charspacing:0]  [charspacing:2]" .. self.player.lv, {0,0}, 999, "Textbox")
+        self.menu_top_lv.progressmode = "none"
+        self.menu_top_lv.HideBubble()
+        self.menu_top_lv.SetParent(self.menu_top_rect)
+        self.menu_top_lv.MoveTo(8,46)
 
-        self.menu_top_hp          = CreateText("[instant][font:menu][charspacing:2]HP[charspacing:0]  [charspacing:2]" .. self.player.hp, {0,0}, 999, "Textbox")
-        self.menu_top_hp          .progressmode = "none"
-        self.menu_top_hp          .HideBubble()
-        self.menu_top_hp          .SetParent(self.menu_top_rect)
-        self.menu_top_hp          .MoveTo(9,46 - 18)
+        self.menu_top_hp = CreateText("[instant][font:menu][charspacing:2]HP[charspacing:0]  [charspacing:2]" .. self.player.hp, {0,0}, 999, "Textbox")
+        self.menu_top_hp.progressmode = "none"
+        self.menu_top_hp.HideBubble()
+        self.menu_top_hp.SetParent(self.menu_top_rect)
+        self.menu_top_hp.MoveTo(8,46 - 18)
 
-        self.menu_top_gold        = CreateText("[instant][font:menu][charspacing:2]G [charspacing:0]  [charspacing:2]" .. self.player.gold, {0,0}, 999, "Textbox")
-        self.menu_top_gold        .progressmode = "none"
-        self.menu_top_gold        .HideBubble()
-        self.menu_top_gold        .SetParent(self.menu_top_rect)
-        self.menu_top_gold        .MoveTo(9,46 - 18 - 18)
+        self.menu_top_gold = CreateText("[instant][font:menu][charspacing:2]G [charspacing:0]  [charspacing:2]" .. self.player.gold, {0,0}, 999, "Textbox")
+        self.menu_top_gold.progressmode = "none"
+        self.menu_top_gold.HideBubble()
+        self.menu_top_gold.SetParent(self.menu_top_rect)
+        self.menu_top_gold.MoveTo(8,46 - 18 - 18)
 
 
         self.menu_bottom_rect_border = CreateSprite("px", "Textbox")
@@ -1082,29 +1104,29 @@ return (function()
         self.menu_bottom_rect.SetAnchor(0, 0)
         self.menu_bottom_rect.MoveTo(6, 6)
 
-        self.menu_bottom_item        = CreateText("[instant][font:uidialogmedspacesave][color:808080]ITEM", {0,0}, 640, "Textbox")
-        self.menu_bottom_item        .progressmode = "none"
-        self.menu_bottom_item        .HideBubble()
-        self.menu_bottom_item        .SetParent(self.menu_bottom_rect)
-        self.menu_bottom_item        .MoveTo(47, 96)
+        self.menu_bottom_item = CreateText("[instant][font:uidialogmedspacesave][color:808080]ITEM", {0,0}, 640, "Textbox")
+        self.menu_bottom_item.progressmode = "none"
+        self.menu_bottom_item.HideBubble()
+        self.menu_bottom_item.SetParent(self.menu_bottom_rect)
+        self.menu_bottom_item.MoveTo(46, 96)
 
-        self.menu_bottom_stat        = CreateText("[instant][font:uidialogmedspacesave]STAT", {0,0}, 640, "Textbox")
-        self.menu_bottom_stat        .progressmode = "none"
-        self.menu_bottom_stat        .HideBubble()
-        self.menu_bottom_stat        .SetParent(self.menu_bottom_rect)
-        self.menu_bottom_stat        .MoveTo(47, 96 - 36)
+        self.menu_bottom_stat = CreateText("[instant][font:uidialogmedspacesave]STAT", {0,0}, 640, "Textbox")
+        self.menu_bottom_stat.progressmode = "none"
+        self.menu_bottom_stat.HideBubble()
+        self.menu_bottom_stat.SetParent(self.menu_bottom_rect)
+        self.menu_bottom_stat.MoveTo(46, 96 - 36)
 
-        self.menu_bottom_cell        = CreateText("[instant][font:uidialogmedspacesave]CELL", {0,0}, 640, "Textbox")
-        self.menu_bottom_cell        .progressmode = "none"
-        self.menu_bottom_cell        .HideBubble()
-        self.menu_bottom_cell        .SetParent(self.menu_bottom_rect)
-        self.menu_bottom_cell        .MoveTo(47, 96 - 36 - 36)
+        self.menu_bottom_cell = CreateText("[instant][font:uidialogmedspacesave]CELL", {0,0}, 640, "Textbox")
+        self.menu_bottom_cell.progressmode = "none"
+        self.menu_bottom_cell.HideBubble()
+        self.menu_bottom_cell.SetParent(self.menu_bottom_rect)
+        self.menu_bottom_cell.MoveTo(46, 96 - 36 - 36)
 
-        self.menu_bottom_soul        = CreateSprite("spr_heartsmall", "Textbox")
-        self.menu_bottom_soul        .Scale(2,2)
-        self.menu_bottom_soul        .SetParent(self.menu_bottom_rect)
-        self.menu_bottom_soul        .SetPivot(0,0)
-        self.menu_bottom_soul        .MoveTo(-47, 28 - (self.current_menu_option * 36))
+        self.menu_bottom_soul = CreateSprite("spr_heartsmall", "Textbox")
+        self.menu_bottom_soul.Scale(2,2)
+        self.menu_bottom_soul.SetParent(self.menu_bottom_rect)
+        self.menu_bottom_soul.SetPivot(0,0)
+        self.menu_bottom_soul.MoveTo(-46, 28 - (self.current_menu_option * 36))
 
         local player_y = self.player.y + 40
         local top = (player_y - self.camera_pos_y) >= 230
@@ -1116,6 +1138,7 @@ return (function()
             self.menu_top_rect_border.MoveToAbs(Overworld.camera_pos_x + 32, Overworld.camera_pos_y + 48)
         end
 
+        self.menu_state = "MAIN"
     end
 
     function self.CloseMenu()
@@ -1132,24 +1155,115 @@ return (function()
                 return
             end
         elseif self.state == "MENU" then
-            if Input.Down == 1 then
-                if self.current_menu_option < 2 then
-                    Audio.PlaySound("menumove")
-                    self.current_menu_option = self.current_menu_option + 1
-                    self.menu_bottom_soul.MoveTo(-47, 28 - (self.current_menu_option * 36))
+            if self.menu_state == "MAIN" then
+                if Input.Down == 1 then
+                    if self.current_menu_option < 2 then
+                        Audio.PlaySound("menumove")
+                        self.current_menu_option = self.current_menu_option + 1
+                        self.menu_bottom_soul.MoveTo(-47, 28 - (self.current_menu_option * 36))
+                    end
                 end
-            end
 
-            if Input.Up == 1 then
-                if self.current_menu_option > 0 then
-                    Audio.PlaySound("menumove")
-                    self.current_menu_option = self.current_menu_option - 1
-                    self.menu_bottom_soul.MoveTo(-47, 28 - (self.current_menu_option * 36))
+                if Input.Up == 1 then
+                    if self.current_menu_option > 0 then
+                        Audio.PlaySound("menumove")
+                        self.current_menu_option = self.current_menu_option - 1
+                        self.menu_bottom_soul.MoveTo(-47, 28 - (self.current_menu_option * 36))
+                    end
                 end
-            end
 
-            if Input.Menu == 1 or Input.Cancel == 1 then
-                self.CloseMenu()
+                if Input.Menu == 1 or Input.Cancel == 1 then
+                    self.CloseMenu()
+                    return
+                end
+
+                if Input.Confirm == 1 then
+                    if (self.current_menu_option == 1) then
+                        self.menu_state = "STAT"
+                        Audio.PlaySound("menuconfirm")
+
+                        self.menu_stat_rect_border = CreateSprite("px", "Textbox")
+                        self.menu_stat_rect_border.SetPivot(0, 0)
+                        self.menu_stat_rect_border.Scale(346, 418)
+
+                        self.menu_stat_rect = CreateSprite("px", "Textbox")
+                        self.menu_stat_rect.SetPivot(0, 0)
+                        self.menu_stat_rect.Scale(346 - 12, 418 - 12)
+                        self.menu_stat_rect.color = {0, 0, 0}
+                        self.menu_stat_rect.SetParent(self.menu_stat_rect_border)
+                        self.menu_stat_rect.SetAnchor(0, 0)
+                        self.menu_stat_rect.MoveTo(6, 6)
+
+                        self.menu_stat_rect_border.MoveToAbs(Overworld.camera_pos_x + 188, Overworld.camera_pos_y + 10)
+
+                        self.menu_bottom_soul.alpha = 0
+
+                        self.menu_stat_name = CreateText("[instant][font:uidialogmedspacesave]\"" .. self.player.name .. "\"", {0,0}, 640, "Textbox")
+                        self.menu_stat_name.progressmode = "none"
+                        self.menu_stat_name.HideBubble()
+                        self.menu_stat_name.SetParent(self.menu_stat_rect)
+                        self.menu_stat_name.MoveTo(22, 354)
+
+                        self.menu_stat_lvhp = CreateText("[instant][font:uidialogmedspacesave][linespacing:2]LV  " .. self.player.lv .. "\nHP  " .. self.player.hp .. " / " .. self.player.maxhp, {0,0}, 640, "Textbox")
+                        self.menu_stat_lvhp.progressmode = "none"
+                        self.menu_stat_lvhp.HideBubble()
+                        self.menu_stat_lvhp.SetParent(self.menu_stat_rect)
+                        self.menu_stat_lvhp.MoveTo(22, 294)
+
+                        self.menu_stat_stats = CreateText("", {0,0}, 640, "Textbox")
+                        self.menu_stat_stats.progressmode = "none"
+                        self.menu_stat_stats.HideBubble()
+                        self.menu_stat_stats.SetParent(self.menu_stat_rect)
+                        self.menu_stat_stats.MoveTo(22, 198)
+                        self.menu_stat_stats.columnShift = 162
+                        self.menu_stat_stats.SetText("[instant][font:uidialogmedspacesave][linespacing:2]AT  " .. Player.atk .. " (" .. Player.weaponatk .. ") \t EXP: " .. self.player.xp .. "\nDF  " .. Player.def .. " (" .. Player.armordef .. ") \t NEXT: " .. BattleHandler.GetNextLevel())
+
+                        self.menu_stat_equips = CreateText("[instant][font:uidialogmedspacesave][linespacing:2]WEAPON: " .. Player.weapon .. "\nARMOR: " .. Player.armor, {0,0}, 640, "Textbox")
+                        self.menu_stat_equips.progressmode = "none"
+                        self.menu_stat_equips.HideBubble()
+                        self.menu_stat_equips.SetParent(self.menu_stat_rect)
+                        self.menu_stat_equips.MoveTo(22, 106)
+
+                        self.menu_stat_gold = CreateText("[instant][font:uidialogmedspacesave][linespacing:2]GOLD: " .. self.player.gold, {0,0}, 640, "Textbox")
+                        self.menu_stat_gold.progressmode = "none"
+                        self.menu_stat_gold.HideBubble()
+                        self.menu_stat_gold.SetParent(self.menu_stat_rect)
+                        self.menu_stat_gold.MoveTo(22, 34)
+
+                    elseif (self.current_menu_option == 2) then
+                        self.menu_state = "CELL"
+                        Audio.PlaySound("menuconfirm")
+
+                        self.menu_cell_rect_border = CreateSprite("px", "Textbox")
+                        self.menu_cell_rect_border.SetPivot(0, 0)
+                        self.menu_cell_rect_border.Scale(346, 270)
+
+                        self.menu_cell_rect = CreateSprite("px", "Textbox")
+                        self.menu_cell_rect.SetPivot(0, 0)
+                        self.menu_cell_rect.Scale(346 - 12, 270 - 12)
+                        self.menu_cell_rect.color = {0, 0, 0}
+                        self.menu_cell_rect.SetParent(self.menu_cell_rect_border)
+                        self.menu_cell_rect.SetAnchor(0, 0)
+                        self.menu_cell_rect.MoveTo(6, 6)
+
+                        self.menu_cell_rect_border.MoveToAbs(Overworld.camera_pos_x + 188, Overworld.camera_pos_y + 158)
+                    end
+                end
+            elseif self.menu_state == "STAT" then
+                if Input.Menu == 1 or Input.Cancel == 1 then
+                    self.menu_state = "MAIN"
+                    self.menu_stat_rect_border.Remove()
+                    Audio.PlaySound("menumove")
+                    self.menu_bottom_soul.alpha = 1
+                    return
+                end
+            elseif self.menu_state == "CELL" then
+                if Input.Menu == 1 or Input.Cancel == 1 then
+                    self.menu_state = "MAIN"
+                    self.menu_cell_rect_border.Remove()
+                    Audio.PlaySound("menumove")
+                    return
+                end
             end
         end
     end
